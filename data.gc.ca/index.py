@@ -33,5 +33,5 @@ N = maxPage(soup)
 
 for i in range(2,N+1):
     soup, t = pageSoup(i)
-    print "Page %d took: %.2f seconds" % t
+    print "Page %d took: %.2f seconds" % (i, t)
     print "estimated total index time: %.2f hr" % (t*N/60.0/60.0)
