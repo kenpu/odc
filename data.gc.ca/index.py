@@ -1,20 +1,23 @@
 from bs4 import BeautifulSoup
 import requests
 import re
-from time import time
+from time import time, sleep
 
 TOPURL = "http://data.gc.ca/data/en/dataset"
 
-def pageSoup(i):
+def pageSoup(i, output, delay=1.0):
     start = time()
+    sleep(delay)
     url = "%s?page=%d" % (TOPURL, i)
     r = requests.get(url)
     soup = BeautifulSoup(r.text)
+    dirDatasetAnchors(soup, output)
     return soup, time()-start
 
-def dirDatasetAnchors(soup):
-    return soup.find_all('a', 
-        href=re.compile(r'/data/en/dataset/[a-z0-9-]+'))
+def dirDatasetAnchors(soup, output):
+    for a in soup.find_all('a', href=re.compile(r'/data/en/dataset/[a-z0-9-]+')):
+        print >>output, a.get('href')
+        output.flush()
 
 def maxPage(soup):
     pattern = re.compile(r'\?page=(\d+)')
@@ -27,11 +30,16 @@ def maxPage(soup):
     return maxnum
 
 print "Starting..."
-(soup, t) = pageSoup(1)
-print "Page 1 took: %.2f seconds" % t
-N = maxPage(soup)
 
-for i in range(2,N+1):
-    soup, t = pageSoup(i)
-    print "Page %d took: %.2f seconds" % (i, t)
-    print "estimated total index time: %.2f hr" % (t*N/60.0/60.0)
+with open('output', 'w') as output:
+
+    (soup, t) = pageSoup(1, output=output, delay=0.0)
+    print "Page 1 took: %.2f seconds" % t
+    N = maxPage(soup)
+
+
+    for i in range(2,N+1):
+        soup, t = pageSoup(i, output=output, delay=1.0)
+        print "Page %d took: %.2f seconds" % (i, t)
+        print "estimated total index time: %.2f hr" % (t*N/60.0/60.0)
+
